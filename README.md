@@ -15,7 +15,7 @@ This project automates the recruitment screening process using an n8n workflow a
 - Google Sheets & Gmail APIs
 
 ## 📂 How to Use
-1. Download the `workflow.json` file from this repo.
+1. Download the `HR Assistant.json` file from this repo.
 2. Open your n8n instance.
 3. Click on the menu (⋮) and select **Import from File**.
 4. Upload the JSON file and connect your own credentials for Gemini, Gmail, and Google Sheets.
