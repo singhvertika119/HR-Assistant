@@ -1,0 +1,393 @@
+{
+  "name": "HR Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "resume-upload",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8d0eb052-d878-4153-a9e9-a48dc0e460e0",
+      "name": "Webhook",
+      "webhookId": "a3dfc82c-8f5d-4724-bd80-a7395515ef88"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an HR assistant.\n\nJob Role: Data Analyst\nRequired Skills: Python, SQL, Pandas, Machine Learning\n\nResume Text:\n{{ $json.body.resumeText }}\n\nReturn ONLY valid JSON:\n{\n  \"score\": number between 0 and 100,\n  \"decision\": \"Shortlist\" or \"Reject\",\n  \"reason\": \"short reason\"\n}\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "fc3ff286-381f-42a5-8748-d23b268118cb",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bnkrENRJfIp5ZoNs",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "500a14ce-cfa1-46c5-ab98-900ec1e01773",
+              "leftValue": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, \"\")).score }}",
+              "rightValue": "=70",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        0
+      ],
+      "id": "8fec1771-7b74-409d-90dd-164bac6665f3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85f359e6-51e2-48ed-84c6-7999567ea88c",
+              "name": "score",
+              "value": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, \"\")).score }}",
+              "type": "number"
+            },
+            {
+              "id": "f78c33de-3b2d-48e4-9764-b1fb0f63deda",
+              "name": "decision",
+              "value": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, \"\")).decision }}",
+              "type": "string"
+            },
+            {
+              "id": "d10dbd50-ab26-4d9a-a0a3-ca423b5f7c4e",
+              "name": "reason",
+              "value": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, \"\")).reason }}",
+              "type": "string"
+            },
+            {
+              "id": "c9af61f6-fb5f-4de6-ad25-974ba096e5eb",
+              "name": "candidate_email",
+              "value": "={{ $node[\"Webhook\"].json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "06001bbe-efd0-46d9-be76-ec8184c69f8c",
+              "name": "name",
+              "value": "={{ $node[\"Webhook\"].json.body.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        -96
+      ],
+      "id": "eaa59793-331b-4c9c-8f8f-b5fa2b9265cc",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.candidate_email }}",
+        "subject": "Congratulations! You have been shortlisted",
+        "message": "=<p>Hi,</p>\n\n<p>We are pleased to inform you that your resume has been shortlisted for the next round.</p>\n\n<p><strong>Evaluation Details:</strong><br>\n- <b>Score:</b> {{ $json.score }}/100<br>\n- <b>Feedback:</b> {{ $json.reason }}</p>\n\n<p>Our team will contact you soon for the interview schedule.</p>\n\n<p>Best regards,<br>\nHiring Team</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        -96
+      ],
+      "id": "89199210-35e1-416c-ad58-0c0d739b5134",
+      "name": "Send a message",
+      "webhookId": "fa666434-1c2f-452c-bb96-8f5b20a2d446",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CDo24NgAeY3bbKC5",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1fu9tO9uwsdCY_XGDMCs9M1Rjp-AjujvT_VWoMjFiVXU",
+          "mode": "list",
+          "cachedResultName": "n8n",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fu9tO9uwsdCY_XGDMCs9M1Rjp-AjujvT_VWoMjFiVXU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fu9tO9uwsdCY_XGDMCs9M1Rjp-AjujvT_VWoMjFiVXU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $('Edit Fields').item.json.candidate_email }}",
+            "Score": "={{ $('Edit Fields').item.json.score }}",
+            "Reason": "={{ $('Edit Fields').item.json.reason }}",
+            "Name ": "={{ $('Edit Fields').item.json.name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1152,
+        -96
+      ],
+      "id": "ef2f0a82-3460-45a7-be81-b363fbcd834f",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "at0uVC1dftgGs390",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a8e3b6f0-aafd-4cce-aae2-815be9148b54",
+              "name": "score",
+              "value": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, \"\")).score }}",
+              "type": "string"
+            },
+            {
+              "id": "0d9e9d92-c450-41ee-87fd-491ae0b46c7e",
+              "name": "reason",
+              "value": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, \"\")).reason }}",
+              "type": "string"
+            },
+            {
+              "id": "ea047a20-0bb8-4f88-bf20-a9fa5658b299",
+              "name": "candidate_email",
+              "value": "={{ $node[\"Webhook\"].json.body.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        96
+      ],
+      "id": "133d18d2-5c71-4a46-9f57-f67fea35afe6",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.candidate_email }}",
+        "subject": "Update regarding your application",
+        "message": "=<p>Hi,</p> <p>Thank you for giving us the opportunity to review your application.</p> <p>After careful consideration, we regret to inform you that we will not be moving forward with your candidature at this time.</p> <p><strong>Feedback from our AI Reviewer:</strong><br> {{ $json.reason }}</p> <p>We wish you the best of luck with your future endeavors.</p> <p>Best regards,<br>Hiring Team</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        96
+      ],
+      "id": "3d247c7a-3693-4827-b5e0-b9f31618d8ae",
+      "name": "Send a message1",
+      "webhookId": "986e963f-34c9-46b4-978a-c6271ff180bb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CDo24NgAeY3bbKC5",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 180,
+    "timeSavedPerExecution": 120
+  },
+  "versionId": "34a60b39-1d3e-43ab-8296-f5407d6cb57f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c57b8c8095779b6c7a4e6eb658b620bb51035eb4e899bd31d09eca8d8f65eb67"
+  },
+  "id": "4xHW7fkWIfyrQz6em-OF9",
+  "tags": []
+}
