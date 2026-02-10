@@ -19,3 +19,8 @@ This project automates the recruitment screening process using an n8n workflow a
 2. Open your n8n instance.
 3. Click on the menu (⋮) and select **Import from File**.
 4. Upload the JSON file and connect your own credentials for Gemini, Gmail, and Google Sheets.
+
+https://github.com/user-attachments/assets/11ffa177-ca21-4afe-9f33-cea499cfa6c0
+
+
+
